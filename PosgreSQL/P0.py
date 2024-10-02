@@ -32,6 +32,15 @@ if __name__ == '__main__':
     # Crear la tabla en la base de datos
     cur = conn.cursor()
 
+    #drop de la tabla por si ya existe y tiene datos
+    drop_table_query = '''
+    DROP TABLE bookCorpus CASCADE;
+    '''
+
+    cur.execute(drop_table_query)
+    conn.commit()
+
+    #Proseguimos con la creacion de la tabla
     create_table_query = '''
     CREATE TABLE IF NOT EXISTS bookCorpus (
         id SERIAL PRIMARY KEY,
@@ -40,16 +49,15 @@ if __name__ == '__main__':
     '''
     cur.execute(create_table_query)
     conn.commit()
-    print("Table created successfully")
+    print("Tabla bookCorpus creada corerctamente")
 
-    # Vector para almacenar los tiempos de inserción
+    # Almacenamos los tiempos de inserción
     insertion_times = []
 
-    # Variable para calcular el tiempo total de inserciones
-    total_insertion_start_time = time.time()  # Momento de inicio de las inserciones
+    total_insertion_start_time = time.time()  # Inicio de las inserciones
 
     # Insertar los datos en PostgreSQL
-    for row in dataset['train']['text'][20000]:
+    for row in dataset['train']['text'][:20000]:
         insert_query = '''
         INSERT INTO bookCorpus (text)
         VALUES (%s);
