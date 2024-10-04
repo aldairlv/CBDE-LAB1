@@ -108,12 +108,12 @@ if __name__ == '__main__':
 
     print("\n\n\n")
 
-    # --- Calcular las distancias Manhattan ---
-    print("Calculando las distancias Manhattan...")
+    # --- Calcular las distancias Coseno ---
+    print("Calculando las distancias Coseno...")
 
-    manhattan_times = []
+    cosine_times = []
 
-    total_manhattan_start_time = time.time()  # Inicio total Manhattan
+    total_cosine_start_time = time.time()  # Inicio total Coseno
 
     for find_embedding in embeddings:
         start_time = time.time()  # Inicio individual
@@ -125,13 +125,13 @@ if __name__ == '__main__':
             id_search_embedding = int(search_embedding[0])
             if id_find_embedding != id_search_embedding:
                 search_embedding = np.array(search_embedding[2])
-                manhattan = np.sum(np.abs(find_embedding - search_embedding))
-                save = [id_search_embedding, manhattan]
+                cosine = np.dot(find_embedding, search_embedding) / (np.linalg.norm(find_embedding) * np.linalg.norm(search_embedding))
+                save = [id_search_embedding, cosine]
                 distances.append(save)
 
         distances.sort(key=lambda x: x[1])  # Ordenar por distancia (mas pequeña a mas grande)
         end_time = time.time()  # Finalización individual
-        manhattan_times.append(end_time - start_time)  # Guardar tiempo individual
+        cosine_times.append(end_time - start_time)  # Guardar tiempo individual
 
         # Imprimir las 2 distancias más pequeñas
         print(f"\nLas 2 distancias más pequeñas para la sentencia '{sentences[id_find_embedding - 1][1]}' son:")
@@ -140,21 +140,21 @@ if __name__ == '__main__':
         print(
             f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.4f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
 
-    # Calcular estadisticas de los tiempos Manhattan
-    if manhattan_times:
-        min_time = min(manhattan_times)
-        max_time = max(manhattan_times)
-        avg_time = np.mean(manhattan_times)
-        std_dev_time = np.std(manhattan_times)
+    # Calcular estadisticas de los tiempos Coseno
+    if cosine_times:
+        min_time = min(cosine_times)
+        max_time = max(cosine_times)
+        avg_time = np.mean(cosine_times)
+        std_dev_time = np.std(cosine_times)
 
-        print(f"\nTiempo minimo de cálculo Manhattan: {min_time:.6f} segundos")
-        print(f"Tiempo maximo de cálculo Manhattan: {max_time:.6f} segundos")
-        print(f"Tiempo promedio de cálculo Manhattan: {avg_time:.6f} segundos")
-        print(f"Desviacion estándar de cálculo Manhattan: {std_dev_time:.6f} segundos")
+        print(f"\nTiempo minimo de cálculo Coseno: {min_time:.6f} segundos")
+        print(f"Tiempo maximo de cálculo Coseno: {max_time:.6f} segundos")
+        print(f"Tiempo promedio de cálculo Coseno: {avg_time:.6f} segundos")
+        print(f"Desviacion estándar de cálculo Coseno: {std_dev_time:.6f} segundos")
 
-        total_manhattan_end_time = time.time()  # Tiempo de finalización total Manhattan
-        total_manhattan_time = total_manhattan_end_time - total_manhattan_start_time  # Tiempo total Manhattan
-        print(f"\nTiempo total de calculo Manhattan: {total_manhattan_time:.6f} segundos")
+        total_cosine_end_time = time.time()  # Tiempo de finalización total Coseno
+        total_cosine_time = total_cosine_end_time - total_cosine_start_time  # Tiempo total Coseno
+        print(f"\nTiempo total de calculo Coseno: {total_cosine_time:.6f} segundos")
 
     # Cerrar conexion
     cur.close()
