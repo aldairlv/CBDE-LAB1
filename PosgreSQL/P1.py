@@ -9,12 +9,6 @@ import warnings
 #Esto es porque me genera un warning de un tokkenizador que no es necesario, de esta manera no aparece
 warnings.simplefilter("ignore", category=FutureWarning)
 
-def load_our_dataset():
-    """ Load our dataset """
-    print("Loading Book Corpus dataset")
-    return load_dataset("williamkgao/bookcorpus100mb")
-
-
 def connect(config):
     """ Connect to the PostgreSQL database server """
     try:

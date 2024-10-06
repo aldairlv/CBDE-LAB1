@@ -1,5 +1,4 @@
 import chromadb
-from datasets import load_dataset
 from chromadb.utils import embedding_functions
 from time import time
 import warnings
@@ -7,13 +6,6 @@ import numpy as np
 
 # Esto es porque me genera un warning de un tokkenizador que no es necesario, de esta manera no aparece
 warnings.simplefilter("ignore", category=FutureWarning)
-
-
-def load_our_dataset():
-    """ Carga nuestro dataset """
-    print("Cargando el Book Corpus dataset")
-    return load_dataset("williamkgao/bookcorpus100mb")
-
 
 if __name__ == '__main__':
     # configuramos chroma
@@ -81,13 +73,12 @@ if __name__ == '__main__':
         avg_time = np.mean(individual_times_cosine)
         std_dev_time = np.std(individual_times_cosine)
 
-        print(f"\nTiempo minimo de cálculo Euclidiana: {min_time:.6f} segundos")
-        print(f"Tiempo maximo de cálculo Euclidiana: {max_time:.6f} segundos")
-        print(f"Tiempo promedio de cálculo Euclidiana: {avg_time:.6f} segundos")
-        print(f"Desviacion estandar de cálculo Euclidiana: {std_dev_time:.6f} segundos")
+        print(f"\nTiempo minimo de cálculo Coseno: {min_time:.6f} segundos")
+        print(f"Tiempo maximo de cálculo Coseno: {max_time:.6f} segundos")
+        print(f"Tiempo promedio de cálculo Coseno: {avg_time:.6f} segundos")
+        print(f"Desviacion estandar de cálculo Coseno: {std_dev_time:.6f} segundos")
 
-        print(
-            f"Tiempo total de obtener los 10 primeros resultados: {end_time_cosine - start_time_cosine:.6f} segundos")
+        print(f"Tiempo total de obtener los 10 primeros resultados: {end_time_cosine - start_time_cosine:.6f} segundos")
 
 
 

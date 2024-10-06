@@ -57,12 +57,13 @@ if __name__ == '__main__':
     total_insertion_start_time = time.time()  # Inicio de las inserciones
 
     # Insertar los datos en PostgreSQL
+
+
     for row in dataset['train']['text'][:20000]:
         insert_query = '''
-        INSERT INTO bookCorpus (text)
-        VALUES (%s);
-        '''
-
+                    INSERT INTO bookCorpus (text)
+                    VALUES (%s);
+                    '''
         start_time = time.time()  # Tiempo de inicio de la inserción de un elemento
         cur.execute(insert_query, (row,))
         conn.commit()

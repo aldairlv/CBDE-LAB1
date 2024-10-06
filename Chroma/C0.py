@@ -74,7 +74,7 @@ if __name__ == '__main__':
             std_dev_cos = np.std(individual_insertion_times_cosine)
 
             print(f"Tiempo mínimo de inserción: {individual_insertion_times_cosine[0]:.6f} segundos")
-            print(f"Tiempo máximo de inserción: {individual_insertion_times_cosine[19]:.6f} segundos")
+            print(f"Tiempo máximo de inserción: {individual_insertion_times_cosine[19 ]:.6f} segundos")
             print(f"Tiempo promedio de inserción: {avg_cos:.6f} segundos")
             print(f"Desviación estándar de inserción: {std_dev_cos:.6f} segundos")
             print(f"Tiempo total de inserción: {end_total_insertion_time - ini_total_insertion_time:.6f} segundos")

@@ -1,16 +1,10 @@
 import chromadb
-from datasets import load_dataset
 from chromadb.utils import embedding_functions
 from time import time
 import warnings
 
 #Esto es porque me genera un warning de un tokkenizador que no es necesario, de esta manera no aparece
 warnings.simplefilter("ignore", category=FutureWarning)
-
-def load_our_dataset():
-    """ Carga nuestro dataset """
-    print("Cargando el Book Corpus dataset")
-    return load_dataset("williamkgao/bookcorpus100mb")
 
 if __name__ == '__main__':
     # configuramos chroma

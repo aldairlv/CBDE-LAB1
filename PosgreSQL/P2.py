@@ -1,14 +1,7 @@
 import psycopg2
 from config import load_config
-from datasets import load_dataset
 import time
 import numpy as np
-
-def load_our_dataset():
-    """ Load our dataset """
-    print("Loading Book Corpus dataset")
-    return load_dataset("williamkgao/bookcorpus100mb")
-
 
 def connect(config):
     """ Connect to the PostgreSQL database server """
@@ -129,16 +122,16 @@ if __name__ == '__main__':
                 save = [id_search_embedding, cosine]
                 distances.append(save)
 
-        distances.sort(key=lambda x: x[1])  # Ordenar por distancia (mas pequeña a mas grande)
+        distances.sort(key=lambda x: x[1], reverse=True)  # Ordenar por distancia (mas pequeña a mas grande)
         end_time = time.time()  # Finalización individual
         cosine_times.append(end_time - start_time)  # Guardar tiempo individual
 
         # Imprimir las 2 distancias más pequeñas
         print(f"\nLas 2 distancias más pequeñas para la sentencia '{sentences[id_find_embedding - 1][1]}' son:")
         print(
-            f"ID Sentencia: {distances[0][0]}, Distancia: {distances[0][1]:.4f}, Sentencia: {all_sentences[distances[0][0] - 1][1]}")
+            f"ID Sentencia: {distances[0][0]}, Distancia: {distances[0][1]:.8f}, Sentencia: {all_sentences[distances[0][0] - 1][1]}")
         print(
-            f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.4f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
+            f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.8f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
 
     # Calcular estadisticas de los tiempos Coseno
     if cosine_times:
