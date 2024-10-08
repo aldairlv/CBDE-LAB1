@@ -132,10 +132,6 @@ if __name__ == '__main__':
     #batch_size = 100
     #embedding_insertion_times, total_insertion_time = insert_embeddings_por_batches(embeddings, batch_size)
     
-    # Cerrar la conexión
-    cur.close()
-    conn.close()
-    
     # Calcular estadísticas para embeddings
     calculate_and_print_statistics(embedding_insertion_times, total_insertion_time)
 
