@@ -12,22 +12,35 @@ def connect(config):
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
+def calculate_and_print_statistics(parcial_times, total_time, name_method):
+    if parcial_times:
+        min_time = min(parcial_times)
+        max_time = max(parcial_times)
+        avg_time = np.mean(parcial_times)
+        std_dev_time = np.std(parcial_times)
 
-if __name__ == '__main__':
-    # Configuracion de la conexion con la base de datos
-    config = load_config()
-    conn = connect(config)
+        print(f"\nTiempo minimo de cálculo {name_method}: {min_time:.6f} segundos")
+        print(f"Tiempo maximo de cálculo {name_method}: {max_time:.6f} segundos")
+        print(f"Tiempo promedio de cálculo {name_method}: {avg_time:.6f} segundos")
+        print(f"Desviacion estandar de cálculo {name_method}: {std_dev_time:.6f} segundos")
+    
+    print(f"\nTiempo total de calculo {name_method}: {total_time:.6f} segundos")
 
-    # Obtenemos los datos de los 10 primeros registros de nuestra tabla
-    cur = conn.cursor()
+def two_min_dist(sentences,id_find_embedding,distances,all_sentences):
+    print(f"\nLas 2 distancias más pequeñas para la sentencia '{sentences[id_find_embedding - 1][1]}' son:")
+    print(
+        f"ID Sentencia: {distances[0][0]}, Distancia: {distances[0][1]:.4f}, Sentencia: {all_sentences[distances[0][0] - 1][1]}")
+    print(
+        f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.4f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
 
-    select_query = '''
-    SELECT * FROM bookCorpus LIMIT 10;
+def get_data(limit,cur):
+    select_query = f'''
+    SELECT * FROM bookCorpus LIMIT {limit};
     '''
     cur.execute(select_query)
-    sentences = [record for record in cur.fetchall()]
+    return [record for record in cur.fetchall()]
 
-    # Buscamos los embeddings de las sentencias que acabamos de obtener
+def get_sentences_embeddings(sentences):
     select_query = '''
     SELECT * FROM bookCorpusEmbeddings WHERE sentence_id = %s;
     '''
@@ -35,27 +48,25 @@ if __name__ == '__main__':
     for sentence in sentences:
         cur.execute(select_query, (sentence[0],))
         embeddings.append(cur.fetchone())
+    return embeddings
 
-    # Almacenamos todos los embeddings de al bd en un array
+def get_all_embeddings(embeddings):
     select_query = '''
     SELECT * FROM bookCorpusEmbeddings;
     '''
     cur.execute(select_query)
-    all_embeddings = [record for record in cur.fetchall()]
+    return [record for record in cur.fetchall()]
 
-    # almacenamos la lista total de sentencias para poder compararlas despues
+def get_all_sentences():
     select_query = '''
     SELECT * FROM bookCorpus;
     '''
     cur.execute(select_query)
-    all_sentences = [record for record in cur.fetchall()]
+    return [record for record in cur.fetchall()]
 
-
-    print("Calculando las distancias euclidianas...")
-
-    euclidean_times = []  # Tiempos
-
-    total_euclidean_start_time = time.time()  # Inicio total Euclidiana
+def calcular_distancia(method,embeddings,all_embeddings,sentences,all_sentences):
+    times = []  # Tiempos
+    total_start_time = time.time()  # Inicio total Euclidiana
 
     for find_embedding in embeddings:
         start_time = time.time()  # Inicio individual
@@ -67,88 +78,63 @@ if __name__ == '__main__':
             id_search_embedding = int(search_embedding[0])
             if id_find_embedding != id_search_embedding:
                 search_embedding = np.array(search_embedding[2])
-                euclidean = np.sqrt(np.sum(np.square(find_embedding - search_embedding)))
-                save = [id_search_embedding, euclidean]
+                if method == "euclidian":
+                    dist = np.sqrt(np.sum(np.square(find_embedding - search_embedding)))
+                elif method == "cosine":
+                    dist = np.dot(find_embedding, search_embedding) / (np.linalg.norm(find_embedding) * np.linalg.norm(search_embedding))
+                save = [id_search_embedding, dist]
                 distances.append(save)
 
-        distances.sort(key=lambda x: x[1])  # Ordenar por distancia (mas pequeña a mas grande)
+        if method == "euclidian":
+            distances.sort(key=lambda x: x[1])  # Ordenar por distancia (mas pequeña a mas grande)
+        elif method == "cosine":
+            distances.sort(key=lambda x: x[1], reverse=True)  # Ordenar por distancia (mas pequeña a mas grande)
         end_time = time.time()  # Finalización individual
-        euclidean_times.append(end_time - start_time)  # Guardar el tiempo individual
+        times.append(end_time - start_time)  # Guardar el tiempo individual
 
         # Imprimir las 2 distancias más pequeñas
-        print(f"\nLas 2 distancias más pequeñas para la sentencia '{sentences[id_find_embedding - 1][1]}' son:")
-        print(
-            f"ID Sentencia: {distances[0][0]}, Distancia: {distances[0][1]:.4f}, Sentencia: {all_sentences[distances[0][0] - 1][1]}")
-        print(
-            f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.4f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
+        two_min_dist(sentences,id_find_embedding,distances,all_sentences)
+
+    total_end_time = time.time()  # Tiempo de finalización total Euclidiana
+    total_time = total_end_time - total_start_time  # Tiempo total Euclidiana
+    return times, total_time
+
+if __name__ == '__main__':
+    # Configuracion de la conexion con la base de datos
+    config = load_config()
+    conn = connect(config)
+
+    # Obtenemos un cursor para trabajar sobre la base de datos
+    cur = conn.cursor()
+
+    # Obtenemos los datos de los 10 primeros registros de nuestra tabla
+    limit = 10
+    sentences = get_data(limit,cur)
+
+    # Buscamos los embeddings de las sentencias que acabamos de obtener
+    embeddings = get_sentences_embeddings(sentences)
+
+    # Almacenamos todos los embeddings de al bd en un array
+    all_embeddings = get_all_embeddings(embeddings)
+    
+    # Almacenamos la lista total de sentencias para poder compararlas despues
+    all_sentences = get_all_sentences()
+
+    print("Calculando las distancias euclidianas...")
+    euclidean_times, total_euclidean_time = calcular_distancia("euclidian",embeddings,all_embeddings,sentences,all_sentences)
 
     # Calcular estadísticas de los tiempos euclidianos
-    if euclidean_times:
-        min_time = min(euclidean_times)
-        max_time = max(euclidean_times)
-        avg_time = np.mean(euclidean_times)
-        std_dev_time = np.std(euclidean_times)
-
-        print(f"\nTiempo minimo de cálculo Euclidiana: {min_time:.6f} segundos")
-        print(f"Tiempo maximo de cálculo Euclidiana: {max_time:.6f} segundos")
-        print(f"Tiempo promedio de cálculo Euclidiana: {avg_time:.6f} segundos")
-        print(f"Desviacion estandar de cálculo Euclidiana: {std_dev_time:.6f} segundos")
-
-        total_euclidean_end_time = time.time()  # Tiempo de finalización total Euclidiana
-        total_euclidean_time = total_euclidean_end_time - total_euclidean_start_time  # Tiempo total Euclidiana
-        print(f"\nTiempo total de calculo Euclidiana: {total_euclidean_time:.6f} segundos")
-
+    calculate_and_print_statistics(euclidean_times, total_euclidean_time,"Euclidiana")
 
     print("\n\n\n")
 
     # --- Calcular las distancias Coseno ---
     print("Calculando las distancias Coseno...")
-
-    cosine_times = []
-
-    total_cosine_start_time = time.time()  # Inicio total Coseno
-
-    for find_embedding in embeddings:
-        start_time = time.time()  # Inicio individual
-        distances = []
-        id_find_embedding = int(find_embedding[0])
-        find_embedding = np.array(find_embedding[2])
-
-        for search_embedding in all_embeddings:
-            id_search_embedding = int(search_embedding[0])
-            if id_find_embedding != id_search_embedding:
-                search_embedding = np.array(search_embedding[2])
-                cosine = np.dot(find_embedding, search_embedding) / (np.linalg.norm(find_embedding) * np.linalg.norm(search_embedding))
-                save = [id_search_embedding, cosine]
-                distances.append(save)
-
-        distances.sort(key=lambda x: x[1], reverse=True)  # Ordenar por distancia (mas pequeña a mas grande)
-        end_time = time.time()  # Finalización individual
-        cosine_times.append(end_time - start_time)  # Guardar tiempo individual
-
-        # Imprimir las 2 distancias más pequeñas
-        print(f"\nLas 2 distancias más pequeñas para la sentencia '{sentences[id_find_embedding - 1][1]}' son:")
-        print(
-            f"ID Sentencia: {distances[0][0]}, Distancia: {distances[0][1]:.8f}, Sentencia: {all_sentences[distances[0][0] - 1][1]}")
-        print(
-            f"ID Sentencia: {distances[1][0]}, Distancia: {distances[1][1]:.8f}, Sentencia: {all_sentences[distances[1][0] - 1][1]}")
-
+    cosine_times, total_cosine_time = calcular_distancia("cosine",embeddings,all_embeddings,sentences,all_sentences)
+    
     # Calcular estadisticas de los tiempos Coseno
-    if cosine_times:
-        min_time = min(cosine_times)
-        max_time = max(cosine_times)
-        avg_time = np.mean(cosine_times)
-        std_dev_time = np.std(cosine_times)
-
-        print(f"\nTiempo minimo de cálculo Coseno: {min_time:.6f} segundos")
-        print(f"Tiempo maximo de cálculo Coseno: {max_time:.6f} segundos")
-        print(f"Tiempo promedio de cálculo Coseno: {avg_time:.6f} segundos")
-        print(f"Desviacion estándar de cálculo Coseno: {std_dev_time:.6f} segundos")
-
-        total_cosine_end_time = time.time()  # Tiempo de finalización total Coseno
-        total_cosine_time = total_cosine_end_time - total_cosine_start_time  # Tiempo total Coseno
-        print(f"\nTiempo total de calculo Coseno: {total_cosine_time:.6f} segundos")
-
+    calculate_and_print_statistics(cosine_times, total_cosine_time,"Coseno")
+   
     # Cerrar conexion
     cur.close()
     conn.close()
